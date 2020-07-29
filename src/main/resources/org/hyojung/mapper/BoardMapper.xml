@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.hyojung.mapper.BoardMapper">
+	<resultMap id="boardVO" type="org.hyojung.domain.BoardVO">
+		<result property="id" column="id"/>
+		<result property="title" column="title"/>
+		<result property="writer_id" column="writer_id"/>
+		<result property="content" column="content" jdbcType="LONGVARCHAR" javaType="java.lang.String"/>
+		<result property="date" column="date"/>
+		<result property="view" column="view"/>
+	</resultMap>
+	
+	<select id="getList" resultType="org.hyojung.domain.BoardVO">
+		<![CDATA[
+		select * from Board where id > 0		
+		]]>
+	</select>
+	
+	<select id="getListWithPage" resultMap="boardVO">
+		<![CDATA[
+			select * from(
+			select @rownum:=@rownum+1 as rn , board.*
+			from board, (select @rownum:=0) tmp 
+		]]>
+		<include refid="criteria"></include>
+		<![CDATA[
+			order by id desc) list
+			where rn <= (#{pageNum}*10) limit #{limitNum}, 10
+		]]>
+	</select>
+	
+	<insert id="insert">
+		insert into Board (title, writer_id, content)
+		values (#{title}, #{writer_id}, #{content})
+	</insert>
+	
+	<select id="getNextId" resultType="int">
+		select auto_increment 
+		from information_schema.tables
+		where table_schema ='board' and table_name ='Board';
+	</select>
+	
+	<select id="get" resultMap="boardVO">
+		select * from Board where id = #{id}
+	</select>
+	
+	<delete id="delete">
+		delete from Board where id = #{id}
+	</delete>
+	
+	<update id="update">
+		update Board set title = #{title},
+		content = #{content}
+		where id = #{id}
+	</update>
+	
+	<select id="getTotal" resultType="int">
+		select count(*) from Board 
+		<include refid="criteria"></include>
+	</select>
+	
+	<update id="updateView">
+		update board set view = view + 1 where id = #{id}
+	</update>
+	
+	<sql id="criteria">
+		<where>
+			<if test="type != null">
+				<choose>
+				<when test="type == 'title'.toString()">
+					title like CONCAT('%',#{keyword},'%')
+				</when>
+				<when test="type == 'content'.toString()">
+					content like CONCAT('%',#{keyword},'%')
+				</when>
+				<when test="type == 'writer_id'.toString()">
+					writer_id like CONCAT('%',#{keyword},'%')
+				</when>
+				</choose>				
+			</if>
+		</where>
+	</sql>
+</mapper>

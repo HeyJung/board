@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.hyojung.mapper.CmtMapper">
+	<resultMap id="cmtvo" type="org.hyojung.domain.CmtVO">
+		<result property="id" column="id"/>
+		<result property="board_id" column="board_id"/>
+		<result property="depth" column="depth"/>
+		<result property="bundle_id" column="bundle_id"/>
+		<result property="bundle_order" column="bundle_order"/>
+		<result property="writer_id" column="writer_id"/>
+		<result property="cmt" column="cmt" />
+		<result property="is_deleted" column="is_deleted"/>
+		<result property="created_date" column="created_date"/>
+		<result property="updated_date" column="updated_date"/>
+	</resultMap>
+<!-- 	private int id; -->
+<!-- 	private int board_id; -->
+<!-- 	private int depth;(default 0) -->
+<!-- 	private int bundle_id; -->
+<!-- 	private int bundle_order; -->
+<!-- 	private String writer_id; -->
+<!-- 	private String cmt; -->
+<!-- 	private boolean id_deleted; (default false)-->
+<!-- 	private Date created_date;(default timestamp) -->
+<!-- 	private Date updated_date; -->
+	<select id="getNextId" resultType="int">
+		select auto_increment 
+		from information_schema.tables
+		where table_schema ='board' and table_name ='BoardCmt';
+	</select>
+	
+	<insert id="insert">
+		insert into BoardCmt (board_id, depth, bundle_id, bundle_order, writer_id, cmt)
+		values (#{board_id},#{depth},#{bundle_id},#{bundle_order},#{writer_id},#{cmt})
+	</insert>
+	
+	<select id="get" resultMap="cmtvo">
+		select * from BoardCmt where id = #{id}
+	</select>
+	
+	<update id="delete">
+		update BoardCmt set is_deleted = true where id = #{id}
+	</update>
+	
+	<update id="update">
+		update BoardCmt set cmt = #{cmt}, updated_date = now() where id = #{id}
+	</update>
+	
+	<select id="getListWithPagint" resultMap="cmtvo">
+		<![CDATA[
+		select * from (
+		select @rownum:=@rownum+1 as rn, BoardCmt.* 
+		from BoardCmt, (select @rownum:=0) tmp
+		where board_id = #{board_id}
+		order by bundle_id, id
+		)list where rn <= (#{cri.pageNum}*10) limit #{cri.limitNum}, 10
+		]]>
+	</select>
+	
+	<select id="getCountByBid" resultType="int">
+		select count(id) from BoardCmt where board_id = #{board_id}
+	</select>
+</mapper>
